@@ -184,7 +184,9 @@ function setup() {
     //frameRate(1);
 }
 
-var logData = { port: window.location.port };
+var isDebug = window.location.port ? true : fals;
+
+var logData = {};
 
 var rot = 0;
 var date = new Date();
@@ -214,7 +216,8 @@ function draw() {
 
         pop();
 
-        text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
+        if (isDebug)
+            text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
         pop();
     }
 
