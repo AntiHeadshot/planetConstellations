@@ -1,5 +1,12 @@
-html,
+html {
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
 body {
-    margin: 0;
-    padding: 0;
+    height: 100%;
+    overflow: auto;
+    position: relative;
+    overflow: hidden;
 }

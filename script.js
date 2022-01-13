@@ -1,3 +1,7 @@
+document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+});
+
 Date.prototype.addDays = function(days) {
     var date = new Date(this.valueOf());
     date.setDate(date.getDate() + days);
@@ -9,12 +13,17 @@ Date.prototype.addHours = function(h) {
     return this;
 }
 
+Date.prototype.addSeconds = function(s) {
+    this.setTime(this.getTime() + (s * 1000));
+    return this;
+}
+
 function GetTrueSize(s) {
     return s / 9.461e+12;
 }
 
 function GetLogSize(s) {
-    return Math.log2(5 + (s * 4.5 / 696340));
+    return Math.log2(5 + (s * 4.5 / 696340)) / 30;
 }
 
 var sizeFunction = GetLogSize;
@@ -25,12 +34,16 @@ var planets = [];
 var scaling = 1;
 
 window.onresize = function() {
-    canvas.size(window.innerWidth, window.innerHeight);
+    resizeCanvas(window.innerWidth, window.innerHeight);
 }
+
+var font;
 
 function setup() {
     canvas = createCanvas(window.innerWidth, window.innerHeight, WEBGL);
     perspective(PI / 3.0, width / height, 0.1, 5000);
+
+    loadFont('The_Bellovia_Sans.ttf', f => font = f);
 
     colorMode(HSL, 360, 100, 100);
 
@@ -71,7 +84,7 @@ function setup() {
 
     function renderPlanet(p) {
         lightFalloff(1, 0, 0);
-        scale(1 / scaling);
+
         sphere(p.GetSize());
     };
 
@@ -132,29 +145,93 @@ function setup() {
 
     scaling = scaling / (maxDist * 2);
 
+    var mc = new Hammer.Manager(document.body);
+
+    // create a pinch and rotate recognizer
+    // these require 2 pointers
+    var pinch = new Hammer.Pinch();
+    var rotate = new Hammer.Rotate();
+
+    // we want to detect both the same time
+    pinch.recognizeWith(rotate);
+
+    // add to the Manager
+    mc.add([pinch, rotate]);
+
+    // mc.on('pinchend pinchstart', e => {
+    //     pf2 = pf;
+    //     rot = e.rotation;
+    // });
+
+    mc.on('pinchstart', e => {
+        pf2 = pf;
+    });
+
+    mc.on('rotatestart', e => {
+        rot = e.rotation;
+    });
+
+    mc.on("pinchin pinchout", e => {
+        pf = Math.max(1, e.scale * pf2);
+    });
+    mc.on("rotatemove", e => {
+        var angDist = rot - e.rotation;
+        angDist += (angDist > 180) ? -360 : (angDist < -180) ? 360 : 0
+        date = date.addSeconds(angDist * 24 * 60 * 60);
+        rot = e.rotation;
+    });
+
     //frameRate(1);
 }
 
-var SizeScaling = 200;
-var SizeScaling = 200;
+var logData = { port: window.location.port };
+
+var rot = 0;
+var date = new Date();
+
+var pf = 1;
+var pf2 = 1;
 
 function draw() {
-    push()
-    rotateX(HALF_PI)
-
     background(0);
     smooth();
+
+    //var date = new Date().addDays(frameCount).addHours(frameCount / 60 * 24);
+    var day = Astronomy.DayValue(date);
+
+    if (font) {
+        push();
+        textFont(font);
+        textSize(24);
+        fill(255, 100, 100);
+
+        push();
+
+        translate(0, -height / 2 + 20);
+        text(date.getDate(), -20, 0);
+        text('.' + (date.getMonth() + 1), 0, 0);
+        text('.' + date.getFullYear(), 20, 0);
+
+        pop();
+
+        text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
+        pop();
+    }
+
+    push();
+    perspective(PI / (3.0 * pf), width / height, 0.1, 5000);
+
+    rotateX(HALF_PI)
+
     noStroke();
 
-
-    var day = Astronomy.DayValue(new Date().addDays(frameCount).addHours(frameCount / 60 * 24));
 
     ambientMaterial(255);
     scale(scaling);
 
     var sunPos = Astronomy.Sun.EclipticCartesianCoordinates(day);
-    pointLight(255, 255, 255, sunPos.x, sunPos.z, sunPos.y);
 
+    pointLight(255, 255, 255, sunPos.x, sunPos.z, sunPos.y);
     for (var planet of planets) {
         push();
 
@@ -165,5 +242,8 @@ function draw() {
 
         pop();
     }
+    pop();
+
+    push();
     pop();
 }
