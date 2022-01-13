@@ -184,7 +184,7 @@ function setup() {
     //frameRate(1);
 }
 
-var isDebug = window.location.port ? true : fals;
+var isDebug = window.location.port ? true : false;
 
 var logData = {};
 
