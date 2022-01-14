@@ -1,3 +1,5 @@
+var isDebug = window.location.port ? true : false;
+
 document.addEventListener('gesturestart', function(e) {
     e.preventDefault();
 });
@@ -7,12 +9,10 @@ Date.prototype.addDays = function(days) {
     date.setDate(date.getDate() + days);
     return date;
 }
-
 Date.prototype.addHours = function(h) {
     this.setTime(this.getTime() + (h * 60 * 60 * 1000));
     return this;
 }
-
 Date.prototype.addSeconds = function(s) {
     this.setTime(this.getTime() + (s * 1000));
     return this;
@@ -33,11 +33,49 @@ var canavas;
 var planets = [];
 var scaling = 1;
 
-window.onresize = function() {
+function updateCanvas() {
     resizeCanvas(window.innerWidth, window.innerHeight);
+    scaling = Math.min(width, height) / (maxDist * 2);
 }
 
+window.onresize = function() {
+    logData.resize = { iw: window.innerWidth, ih: window.innerHeight };
+    updateCanvas()
+}
+
+var isPortrait = window.orientation % 180;
+
+function Sleep(milliseconds) {
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
+function orientationChanged() {
+    const timeout = 1000;
+    return new window.Promise(function(resolve) {
+        let height0 = window.innerHeight;
+        let i = 0;
+        do {
+            if (window.innerHeight != height0)
+                return resolve();
+            else {
+                Sleep(10);
+                i += 10;
+            }
+        } while (i <= timeout);
+    });
+}
+
+window.onorientationchange = function() {
+    logData.orientation++;
+    //alert(window.orientation);
+    orientationChanged().then(function() {
+        isPortrait = window.orientation % 180;
+        updateCanvas();
+    });
+};
+
 var font;
+var maxDist;
 
 function setup() {
     canvas = createCanvas(window.innerWidth, window.innerHeight, WEBGL);
@@ -73,9 +111,7 @@ function setup() {
 
     var day = Astronomy.DayValue(new Date());
 
-    scaling = Math.min(width, height);
-
-    var maxDist = 0;
+    maxDist = 0;
     for (var planet of planets) {
         var p = planet;
         var dist = planet.DistanceFromSun(day);
@@ -143,9 +179,11 @@ function setup() {
         renderPlanet(this);
     };
 
-    scaling = scaling / (maxDist * 2);
+    scaling = Math.min(width, height) / (maxDist * 2);
 
     var mc = new Hammer.Manager(document.body);
+
+    // add to the Manager
 
     // create a pinch and rotate recognizer
     // these require 2 pointers
@@ -153,15 +191,11 @@ function setup() {
     var rotate = new Hammer.Rotate();
 
     // we want to detect both the same time
+
     pinch.recognizeWith(rotate);
 
-    // add to the Manager
     mc.add([pinch, rotate]);
 
-    // mc.on('pinchend pinchstart', e => {
-    //     pf2 = pf;
-    //     rot = e.rotation;
-    // });
 
     mc.on('pinchstart', e => {
         pf2 = pf;
@@ -172,7 +206,7 @@ function setup() {
     });
 
     mc.on("pinchin pinchout", e => {
-        pf = Math.max(1, e.scale * pf2);
+        pf = Math.min(Math.max(1, e.scale * pf2), 300);
     });
     mc.on("rotatemove", e => {
         var angDist = rot - e.rotation;
@@ -181,12 +215,9 @@ function setup() {
         rot = e.rotation;
     });
 
-    //frameRate(1);
 }
 
-var isDebug = window.location.port ? true : false;
-
-var logData = {};
+var logData = { orientation: 0 };
 
 var rot = 0;
 var date = new Date();
@@ -195,11 +226,28 @@ var pf = 1;
 var pf2 = 1;
 
 function draw() {
+    height = window.innerHeight;
+    width = window.innerWidth;
+
     background(0);
     smooth();
 
+    logData.width = width;
+    logData.heigth = height;
+
     //var date = new Date().addDays(frameCount).addHours(frameCount / 60 * 24);
     var day = Astronomy.DayValue(date);
+
+    push();
+    stroke('red');
+    strokeWeight(2);
+    noFill();
+    translate(-width / 2, -height / 2);
+    rect(1, 1, width - 2, height - 2);
+    stroke('green');
+    translate(-width / 2, -height / 2);
+    rect(1, 1, width * 2 - 2, height * 2 - 2);
+    pop();
 
     if (font) {
         push();
@@ -208,7 +256,7 @@ function draw() {
         fill(255, 100, 100);
 
         push();
-
+        logData.top = -height / 2 + 20;
         translate(0, -height / 2 + 20);
         text(date.getDate(), -20, 0);
         text('.' + (date.getMonth() + 1), 0, 0);
@@ -216,8 +264,10 @@ function draw() {
 
         pop();
 
+        textSize(12);
         if (isDebug)
-            text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
+        //text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
+            text(JSON.stringify(logData, null, '\t'), 0, 0, width, height - 40);
         pop();
     }
 
@@ -227,7 +277,6 @@ function draw() {
     rotateX(HALF_PI)
 
     noStroke();
-
 
     ambientMaterial(255);
     scale(scaling);
