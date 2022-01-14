@@ -226,8 +226,8 @@ var pf = 1;
 var pf2 = 1;
 
 function draw() {
-    height = window.innerHeight;
-    width = window.innerWidth;
+    height = canvas.innerHeight;
+    width = canvas.innerWidth;
 
     background(0);
     smooth();
