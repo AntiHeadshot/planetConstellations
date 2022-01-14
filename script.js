@@ -1,19 +1,19 @@
 var isDebug = window.location.port ? true : false;
 
-document.addEventListener('gesturestart', function(e) {
+document.addEventListener('gesturestart', function (e) {
     e.preventDefault();
 });
 
-Date.prototype.addDays = function(days) {
+Date.prototype.addDays = function (days) {
     var date = new Date(this.valueOf());
     date.setDate(date.getDate() + days);
     return date;
 }
-Date.prototype.addHours = function(h) {
+Date.prototype.addHours = function (h) {
     this.setTime(this.getTime() + (h * 60 * 60 * 1000));
     return this;
 }
-Date.prototype.addSeconds = function(s) {
+Date.prototype.addSeconds = function (s) {
     this.setTime(this.getTime() + (s * 1000));
     return this;
 }
@@ -38,7 +38,7 @@ function updateCanvas() {
     scaling = Math.min(width, height) / (maxDist * 2);
 }
 
-window.onresize = function() {
+window.onresize = function () {
     logData.resize = { iw: window.innerWidth, ih: window.innerHeight };
     updateCanvas()
 }
@@ -51,7 +51,7 @@ function Sleep(milliseconds) {
 
 function orientationChanged() {
     const timeout = 1000;
-    return new window.Promise(function(resolve) {
+    return new window.Promise(function (resolve) {
         let height0 = window.innerHeight;
         let i = 0;
         do {
@@ -65,117 +65,72 @@ function orientationChanged() {
     });
 }
 
-window.onorientationchange = function() {
+window.onorientationchange = function () {
     logData.orientation++;
     //alert(window.orientation);
-    orientationChanged().then(function() {
+    orientationChanged().then(function () {
         isPortrait = window.orientation % 180;
         updateCanvas();
     });
 };
 
 var font;
+var lightMap;
 var maxDist;
+var skyBoxTxt;
+var skyBox;
+
+function preload() {
+    font = loadFont('The_Bellovia_Sans.ttf');
+    //lightMap = loadImage('images/lightMap.png');
+    //https://tools.wwwtyro.net/space-3d/index.html#animationSpeed=0.24599640845243664&fov=150&nebulae=false&pointStars=true&resolution=4096&seed=5ep4a2tl2740&stars=true&sun=false
+    skyBoxTxt = loadImage('images/cubemap.png');
+    skyBox = loadModel('images/skybox.obj');
+}
+
+function renderPlanet(p) {
+    lightFalloff(1, 0, 0);
+    ambientMaterial(p.color);
+    ambientLight(p.color.h, 50, 5);
+
+    sphere(p.GetSize());
+};
+
+function InitPlanet(planet, sizeInKm, color){
+
+    planet.GetSize = () => sizeFunction(sizeInKm / 2);
+    planet.color = color;
+    planet.render = ()=>renderPlanet(planet);
+
+    return planet;
+}
 
 function setup() {
     canvas = createCanvas(window.innerWidth, window.innerHeight, WEBGL);
     perspective(PI / 3.0, width / height, 0.1, 5000);
 
-    loadFont('The_Bellovia_Sans.ttf', f => font = f);
-
     colorMode(HSL, 360, 100, 100);
 
-    Astronomy.Sun.GetSize = () => sizeFunction(696340 / 2);
-    Astronomy.Mercury.GetSize = () => sizeFunction(2439.7 / 2);
-    Astronomy.Venus.GetSize = () => sizeFunction(6051.8 / 2);
-    Astronomy.Earth.GetSize = () => sizeFunction(6371 / 2);
-    Astronomy.Moon.GetSize = () => sizeFunction(1737.4 / 2);
-    Astronomy.Mars.GetSize = () => sizeFunction(3389.5 / 2);
-    Astronomy.Jupiter.GetSize = () => sizeFunction(69911 / 2);
-    Astronomy.Saturn.GetSize = () => sizeFunction(58232 / 2);
-    Astronomy.Uranus.GetSize = () => sizeFunction(25362 / 2);
-    Astronomy.Neptune.GetSize = () => sizeFunction(24622 / 2);
-    Astronomy.Pluto.GetSize = () => sizeFunction(1188.3 / 2);
-
-    planets.push(Astronomy.Sun);
-    planets.push(Astronomy.Mercury);
-    planets.push(Astronomy.Venus);
-    planets.push(Astronomy.Earth);
-    planets.push(Astronomy.Moon);
-    planets.push(Astronomy.Mars);
-    planets.push(Astronomy.Jupiter);
-    planets.push(Astronomy.Saturn);
-    planets.push(Astronomy.Uranus);
-    planets.push(Astronomy.Neptune);
-    planets.push(Astronomy.Pluto);
+    planets.push(InitPlanet(Astronomy.Sun,696340,color('white')));
+    planets.push(InitPlanet(Astronomy.Mercury,2439.7,color(25, 84, 81)));
+    planets.push(InitPlanet(Astronomy.Venus,6051.8,color(0, 100, 91)));
+    planets.push(InitPlanet(Astronomy.Earth,6371,color(208, 100, 81)));
+    planets.push(InitPlanet(Astronomy.Moon,1737.4,color(200, 100, 99)));
+    planets.push(InitPlanet(Astronomy.Mars,3389.5,color(10, 96, 65)));
+    planets.push(InitPlanet(Astronomy.Jupiter,69911,color(35, 100, 80)));
+    planets.push(InitPlanet(Astronomy.Saturn,58232,color(59, 100, 75)));
+    planets.push(InitPlanet(Astronomy.Uranus,25362,color(216, 100, 81)));
+    planets.push(InitPlanet(Astronomy.Neptune,24622,color(230, 70, 70)));
+    planets.push(InitPlanet(Astronomy.Pluto,1188.3,color(213, 100, 96)));
 
     var day = Astronomy.DayValue(new Date());
 
     maxDist = 0;
-    for (var planet of planets) {
-        var p = planet;
-        var dist = planet.DistanceFromSun(day);
-        maxDist = Math.max(dist, maxDist);
-    }
+    for (var planet of planets)
+        maxDist = Math.max(planet.DistanceFromSun(day), maxDist);
 
-    function renderPlanet(p) {
-        lightFalloff(1, 0, 0);
-
-        sphere(p.GetSize());
-    };
-
-    Astronomy.Sun.render = function() {
+    Astronomy.Sun.render = function () {
         emissiveMaterial(38, 100, 65);
-        renderPlanet(this);
-    };
-    Astronomy.Mercury.render = function() {
-        ambientMaterial(25, 84, 81);
-        ambientLight(25, 50, 5);
-        renderPlanet(this);
-    };
-    Astronomy.Venus.render = function() {
-        ambientMaterial(0, 100, 91);
-        ambientLight(0, 50, 5);
-        renderPlanet(this);
-    };
-    Astronomy.Earth.render = function() {
-        ambientMaterial(208, 100, 81);
-        ambientLight(208, 50, 5);
-        renderPlanet(this);
-    };
-    Astronomy.Moon.render = function() {
-        ambientMaterial(200, 100, 99);
-        ambientLight(200, 50, 5);
-        renderPlanet(this);
-    };
-    Astronomy.Mars.render = function() {
-        ambientMaterial(10, 96, 65);
-        ambientLight(10, 50, 5);
-        renderPlanet(this);
-    };
-    Astronomy.Jupiter.render = function() {
-        ambientMaterial(35, 100, 80);
-        ambientLight(35, 50, 5);
-        renderPlanet(this);
-    };
-    Astronomy.Saturn.render = function() {
-        ambientMaterial(59, 100, 75);
-        ambientLight(59, 50, 5);
-        renderPlanet(this);
-    };
-    Astronomy.Uranus.render = function() {
-        ambientMaterial(216, 100, 81);
-        ambientLight(216, 50, 5);
-        renderPlanet(this);
-    };
-    Astronomy.Neptune.render = function() {
-        ambientMaterial(230, 70, 70);
-        ambientLight(230, 50, 5);
-        renderPlanet(this);
-    };
-    Astronomy.Pluto.render = function() {
-        ambientMaterial(213, 100, 96);
-        ambientLight(213, 50, 5);
         renderPlanet(this);
     };
 
@@ -226,9 +181,8 @@ var pf = 1;
 var pf2 = 1;
 
 function draw() {
-    var canvasElem = document.getElementsByTagName('canvas')[0];
-    height = canvasElem.clientHeight;
-    width = canvasElem.clientWidth;
+    height = canvas.elt.clientHeight;
+    width = canvas.elt.clientWidth;
 
     background(0);
     smooth();
@@ -238,6 +192,8 @@ function draw() {
 
     //var date = new Date().addDays(frameCount).addHours(frameCount / 60 * 24);
     var day = Astronomy.DayValue(date);
+    
+    //orbitControl();
 
     push();
     stroke('red');
@@ -267,7 +223,7 @@ function draw() {
 
         textSize(12);
         if (isDebug)
-        //text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
+            //text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
             text(JSON.stringify(logData, null, '\t'), 0, 0, width, height - 40);
         pop();
     }
@@ -298,5 +254,12 @@ function draw() {
     pop();
 
     push();
+    
+    noStroke();
+
+    scale(scaling* maxDist*2);
+    texture(skyBoxTxt);
+    model(skyBox);
+
     pop();
 }
