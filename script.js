@@ -1,20 +1,24 @@
+'use strict';
+
 var isDebug = window.location.port ? true : false;
 
-document.addEventListener('gesturestart', function(e) {
+document.addEventListener('gesturestart', function (e) {
     e.preventDefault();
 });
 
-Date.prototype.addHours = function(h) {
+Date.prototype.addHours = function (h) {
     this.setTime(this.getTime() + (h * 60 * 60 * 1000));
     return this;
-}
-Date.prototype.addSeconds = function(s) {
+};
+
+Date.prototype.addSeconds = function (s) {
     this.setTime(this.getTime() + (s * 1000));
     return this;
-}
-Date.prototype.addDays = function(days) {
-    return date.addHours(days * 24);
-}
+};
+
+Date.prototype.addDays = function (days) {
+    return this.addHours(days * 24);
+};
 
 function GetTrueSize(s) {
     return s / 9.461e+12;
@@ -37,20 +41,20 @@ function updateCanvas() {
     scaling = Math.min(width, height) / (maxDist * 2);
 }
 
-window.onresize = function() {
+window.onresize = function () {
     logData.resize = { iw: window.innerWidth, ih: window.innerHeight };
-    updateCanvas()
-}
+    updateCanvas();
+};
 
 var isPortrait = window.orientation % 180;
 
 function Sleep(milliseconds) {
-    return new Promise(resolve => setTimeout(resolve, milliseconds));
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 function orientationChanged() {
     const timeout = 1000;
-    return new window.Promise(function(resolve) {
+    return new window.Promise(function (resolve) {
         let height0 = window.innerHeight;
         let i = 0;
         do {
@@ -64,10 +68,10 @@ function orientationChanged() {
     });
 }
 
-window.onorientationchange = function() {
+window.onorientationchange = function () {
     logData.orientation++;
     //alert(window.orientation);
-    orientationChanged().then(function() {
+    orientationChanged().then(function () {
         isPortrait = window.orientation % 180;
         updateCanvas();
     });
@@ -96,11 +100,11 @@ function InitPlanet(planet, sizeInKm, color) {
 function setup() {
     canvas = createCanvas(window.innerWidth, window.innerHeight, WEBGL);
     cam = createCamera();
-    cam.perspective(PI / 3.0, width / height, 0.1, 100000);
+    cam.ortho(-width / 2, width / 2, height / 2, -height / 2, 0, 500);
 
     cam.lookAt(0, 0, 0);
-    cam.setPosition(0, -(height / 2) / tan(PI / 6), 0);
-    cam.tilt(HALF_PI);
+    cam.setPosition(0, 250, 0);
+    cam.tilt(-HALF_PI);
 
     colorMode(HSL, 360, 100, 100);
 
@@ -118,7 +122,7 @@ function setup() {
     planets.push(InitPlanet(Astronomy.Neptune, 24622, color(230, 70, 70)));
     planets.push(InitPlanet(Astronomy.Pluto, 1188.3, color(213, 100, 96)));
 
-    Astronomy.Sun.render = function() {
+    Astronomy.Sun.render = function () {
         emissiveMaterial(38, 100, 65);
         sphere(this.GetSize());
     };
@@ -168,9 +172,7 @@ var pf2 = 1;
 function draw() {
     logData.pf = pf;
 
-    cam.perspective(PI / (3.0 * pf), width / height, 0.1, 100000);
-
-    var ddDist = cam.eyeY + ((height / 2) / tan(PI / (6.0 * pf)));
+    cam.ortho(-width / 2, width / 2, height / 2, -height / 2, 0, 500);
 
     height = canvas.elt.clientHeight;
     width = canvas.elt.clientWidth;
@@ -186,18 +188,11 @@ function draw() {
 
     rotateX(HALF_PI);
 
-    print(ddDist);
-
-    push();
-    translate(0, 0, -ddDist);
-    drawUi();
-    pop();
-
     push();
 
     noStroke();
 
-    scale(scaling);
+    scale(scaling * pf);
 
     var sunPos = Astronomy.Sun.EclipticCartesianCoordinates(day);
     //pointLight(255, 255, 255, sunPos.x, sunPos.z, sunPos.y);
@@ -206,7 +201,8 @@ function draw() {
         var position = planet.EclipticCartesianCoordinates(day);
 
         if (planet !== Astronomy.Sun) {
-            directionalLight(255, 255, 255, position.x - sunPos.x, position.z - sunPos.z, -(position.y - sunPos.y));
+            var ligthDir = position.subtract(sunPos);
+            directionalLight(255, 255, 255, ligthDir.x, ligthDir.z, -ligthDir.y);
         }
         translate(position.x, -position.y, position.z);
         planet.render()
@@ -216,6 +212,10 @@ function draw() {
     }
     pop();
 
+    push();
+    translate(0,0,-100);
+    drawUi();
+    pop();
 }
 
 function drawUi() {
@@ -247,7 +247,7 @@ function drawUi() {
 
         textSize(12);
         if (isDebug)
-        //text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
+            //text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
             text(JSON.stringify(logData, null, '\t'), 0, 0, width, height - 40);
         pop();
     }
@@ -279,7 +279,7 @@ function AddSphere(x, y, z, s) {
 //     mY = undefined;
 // }
 
-window.addEventListener('wheel', function(event) {
+window.addEventListener('wheel', function (event) {
     event.preventDefault();
 }, { passive: false });
 

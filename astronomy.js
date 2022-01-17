@@ -142,7 +142,7 @@ function DefaultGeocentricCoordinates(day) // this function is used for most cel
 {
     var bc = this.EclipticCartesianCoordinates(day); // get this body's heliocentric coordinates
     var ec = Astronomy.Earth.EclipticCartesianCoordinates(day); // get Earth's heliocentric coordinates
-    return bc.Subtract(ec); // subtract vectors to get the vector from Earth to this body
+    return bc.subtract(ec); // subtract vectors to get the vector from Earth to this body
 }
 
 function DefaultEclipticAngularCoordinates(day) {
@@ -930,7 +930,7 @@ function CreateMoon() {
     moon.EclipticCartesianCoordinates = function(day) {
         var mc = this.GeocentricCoordinates(day);
         var ec = Astronomy.Earth.EclipticCartesianCoordinates(day);
-        return ec.Add(mc);
+        return ec.add(mc);
     }
 
     moon.GeocentricCoordinates = PlanetPS.prototype.EclipticCartesianCoordinates; // Moon uses same formulas as planet, but results in geocentric values!
@@ -1537,7 +1537,7 @@ CartesianCoordinates.prototype.Distance = function() {
     return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
 }
 
-CartesianCoordinates.prototype.Normalize = function() {
+CartesianCoordinates.prototype.normalize = function() {
     var r = this.Distance();
     if (r == 0.0) {
         throw "Cannot normalize zero vector.";
@@ -1545,17 +1545,21 @@ CartesianCoordinates.prototype.Normalize = function() {
     return new CartesianCoordinates(this.x / r, this.y / r, this.z / r);
 }
 
-CartesianCoordinates.prototype.Subtract = function(other) {
+CartesianCoordinates.prototype.subtract = function(other) {
     return new CartesianCoordinates(this.x - other.x, this.y - other.y, this.z - other.z);
 }
 
-CartesianCoordinates.prototype.Add = function(other) {
+CartesianCoordinates.prototype.add = function(other) {
     return new CartesianCoordinates(this.x + other.x, this.y + other.y, this.z + other.z);
 }
 
+CartesianCoordinates.prototype.reverse = function() {
+    return new CartesianCoordinates(-this.x, -this.y, -this.z);
+}
+
 function AngleBetweenVectorsInDegrees(va, vb) {
-    var a = va.Normalize();
-    var b = vb.Normalize();
+    var a = va.normalize();
+    var b = vb.normalize();
 
     // The normalized dot product of two vectors is equal to the cosine of the angle between them.
     var dotprod = a.x * b.x + a.y * b.y + a.z * b.z;
