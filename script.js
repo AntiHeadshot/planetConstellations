@@ -77,9 +77,8 @@ var font;
 var maxDist;
 
 function renderPlanet(p) {
-    lightFalloff(1, 0, 0);
     ambientMaterial(p.color);
-    ambientLight(p.color.h, 50, 5);
+    ambientLight(p.color.h, 50, 15);
 
     sphere(p.GetSize());
 };
@@ -186,8 +185,6 @@ function draw() {
 
     rotateX(HALF_PI);
 
-    print(ddDist);
-
     push();
     translate(0, 0, -ddDist);
     drawUi();
@@ -206,10 +203,10 @@ function draw() {
         var position = planet.EclipticCartesianCoordinates(day);
 
         if (planet !== Astronomy.Sun) {
-            directionalLight(255, 255, 255, position.x - sunPos.x, position.z - sunPos.z, -(position.y - sunPos.y));
+            directionalLight(0, 0, 100, position.x - sunPos.x, position.z - sunPos.z, -(position.y - sunPos.y));
         }
         translate(position.x, -position.y, position.z);
-        planet.render()
+        planet.render();
         noLights();
 
         pop();
@@ -251,13 +248,6 @@ function drawUi() {
             text(JSON.stringify(logData, null, '\t'), 0, 0, width, height - 40);
         pop();
     }
-}
-
-function AddSphere(x, y, z, s) {
-    push();
-    translate(x, y, z);
-    sphere(s);
-    pop();
 }
 
 // var mX;
