@@ -1,5 +1,38 @@
 'use strict';
 
+p5.Vector.prototype.rotateAround = function (axis, angle) {
+    // Make sure our axis is a unit vector
+    axis = p5.Vector.normalize(axis);
+
+    return p5.Vector.add(
+        p5.Vector.mult(this, cos(angle)),
+        p5.Vector.add(
+            p5.Vector.mult(
+                p5.Vector.cross(axis, this),
+                sin(angle)
+            ),
+            p5.Vector.mult(
+                p5.Vector.mult(
+                    axis,
+                    p5.Vector.dot(axis, this)
+                ),
+                (1 - cos(angle))
+            )
+        )
+    );
+}
+
+p5.Vector.prototype.vrrot = function (b) {
+    var an = p5.Vector.normalize(this);
+    var bn = p5.Vector.normalize(b);
+    var axb = p5.Vector.cross(an, bn).normalize();
+    var ac = Math.acos(p5.Vector.dot(an, bn));
+
+    var ac2 = ((an.cross(bn)).dot(axb)) / (an.dot(bn));
+
+    return { axis: axb, ang: ac };
+}
+
 var isDebug = window.location.port ? true : false;
 
 document.addEventListener('gesturestart', function (e) {
@@ -98,22 +131,24 @@ function InitPlanet(planet, sizeInKm, color) {
 }
 
 function setup() {
+    colorMode(HSL, 360, 100, 100);
+    angleMode(DEGREES);
+
     canvas = createCanvas(window.innerWidth, window.innerHeight, WEBGL);
     cam = createCamera();
     cam.ortho(-width / 2, width / 2, height / 2, -height / 2, 0, 500);
 
     cam.lookAt(0, 0, 0);
     cam.setPosition(0, 250, 0);
-    cam.tilt(-HALF_PI);
+    cam.tilt(-90);
 
-    colorMode(HSL, 360, 100, 100);
 
     loadFont('The_Bellovia_Sans.ttf', f => font = f);
 
     planets.push(InitPlanet(Astronomy.Sun, 696340, color('white')));
+    planets.push(InitPlanet(Astronomy.Earth, 6371, color(208, 100, 81)));
     planets.push(InitPlanet(Astronomy.Mercury, 2439.7, color(25, 84, 81)));
     planets.push(InitPlanet(Astronomy.Venus, 6051.8, color(0, 100, 91)));
-    planets.push(InitPlanet(Astronomy.Earth, 6371, color(208, 100, 81)));
     planets.push(InitPlanet(Astronomy.Moon, 1737.4, color(200, 100, 99)));
     planets.push(InitPlanet(Astronomy.Mars, 3389.5, color(10, 96, 65)));
     planets.push(InitPlanet(Astronomy.Jupiter, 69911, color(35, 100, 80)));
@@ -161,13 +196,16 @@ function setup() {
 
 }
 
-var logData = {};
+var logData = {dir:dir};
 
 var rot = 0;
 var date = new Date();
 
-var pf = 30;
+var pf = 5;
 var pf2 = 1;
+
+var fov = 180;
+var dir = 0;
 
 function draw() {
     logData.pf = pf;
@@ -183,25 +221,24 @@ function draw() {
     logData.width = width;
     logData.heigth = height;
 
-    //var date = new Date().addDays(frameCount).addHours(frameCount / 60 * 24);
+    date = new Date().addDays(frameCount).addHours(frameCount / 60 * 24);
     var day = Astronomy.DayValue(date);
 
-    rotateX(HALF_PI);
+    rotateX(90);
 
     push();
 
-    noStroke();
-
     scale(scaling * pf);
 
-    var sunPos = Astronomy.Sun.EclipticCartesianCoordinates(day);
-    //pointLight(255, 255, 255, sunPos.x, sunPos.z, sunPos.y);
-    for (var planet of planets) {
-        push();
-        var position = planet.EclipticCartesianCoordinates(day);
+    noStroke();
 
-        if (planet !== Astronomy.Sun) {
-            var ligthDir = position.subtract(sunPos);
+    function renderPlanet(planet, sunPos) {
+        push();
+
+        var position = planet.EclipticVector(day);
+
+        if (sunPos) {
+            var ligthDir = p5.Vector.sub(position, sunPos);
             directionalLight(255, 255, 255, ligthDir.x, ligthDir.z, -ligthDir.y);
         }
         translate(position.x, -position.y, position.z);
@@ -209,11 +246,60 @@ function draw() {
         noLights();
 
         pop();
+        return position;
     }
+
+    function renderFromEarth(planet, pos, earthPos) {
+        push();
+
+        var ligthDir = p5.Vector.sub(pos, earthPos);
+        directionalLight(255, 255, 255, ligthDir.x, ligthDir.z, -ligthDir.y);
+
+        translate(pos.x, -pos.y, pos.z);
+        //planet.render();
+        noLights();
+
+        pop();
+    }
+
+    var sunPos = renderPlanet(Astronomy.Sun);
+    var earthPos = renderPlanet(Astronomy.Earth, sunPos);
+    renderFromEarth(Astronomy.Sun, sunPos, earthPos);
+    for (var planet of planets.slice(2)) {
+        var pos = renderPlanet(planet, sunPos);
+        renderFromEarth(planet, pos, earthPos);
+    }
+
+    translate(earthPos.x, -earthPos.y, earthPos.z + 0.1);
+
+    var fovDir = new p5.Vector(0, 1, 0).mult(maxDist);
+
+    var for2 = fov / 2;
+    fovDir = fovDir.rotateAround(new p5.Vector(0, 0, 1), for2 + dir);
+
+    logData.fov = [];
+    var stepCnt = 10;
+    var step = for2 / stepCnt;
+    var raystrength = 20;
+    for (var i = 0; i <= stepCnt; i++) {
+        var c = (1 - (i / stepCnt)) * 0.6 + 0.4;
+        stroke(c * c * raystrength);
+        line(0, 0, 0, fovDir.x, fovDir.y, fovDir.z);
+        logData.fov.push(fovDir);
+        fovDir = fovDir.rotateAround(new p5.Vector(0, 0, -1), step);
+    }
+    for (var i = 0; i < stepCnt; i++) {
+        var c = (i / stepCnt) * 0.6 + 0.4;
+        stroke(c * c * raystrength);
+        line(0, 0, 0, fovDir.x, fovDir.y, fovDir.z);
+        logData.fov.push(fovDir);
+        fovDir = fovDir.rotateAround(new p5.Vector(0, 0, -1), step);
+    }
+
     pop();
 
     push();
-    translate(0,0,-100);
+    translate(0, 0, 0);
     drawUi();
     pop();
 }
@@ -247,17 +333,9 @@ function drawUi() {
 
         textSize(12);
         if (isDebug)
-            //text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
-            text(JSON.stringify(logData, null, '\t'), 0, 0, width, height - 40);
+            text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
         pop();
     }
-}
-
-function AddSphere(x, y, z, s) {
-    push();
-    translate(x, y, z);
-    sphere(s);
-    pop();
 }
 
 // var mX;
@@ -284,10 +362,11 @@ window.addEventListener('wheel', function (event) {
 }, { passive: false });
 
 function mouseWheel(event) {
-    if (crtlPressed)
-        pf = Math.min(Math.max(1, pf * (1 + event.delta / 10000)), 50);
-    else
-        date = date.addDays(Math.sign(event.delta) * 0.5);
+
+    //    pf = Math.min(Math.max(1, pf * (1 + event.delta / 10000)), 50);
+    dir += (event.delta / 100);
+    logData.dir = dir;
+    //    date = date.addDays(Math.sign(event.delta) * 0.5);
 }
 
 var crtlPressed = false;
