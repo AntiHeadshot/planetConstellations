@@ -1,20 +1,9 @@
-var isDebug = window.location.port ? true : false;
+'use strict';
 
 document.addEventListener('gesturestart', function(e) {
     e.preventDefault();
 });
-
-Date.prototype.addHours = function(h) {
-    this.setTime(this.getTime() + (h * 60 * 60 * 1000));
-    return this;
-}
-Date.prototype.addSeconds = function(s) {
-    this.setTime(this.getTime() + (s * 1000));
-    return this;
-}
-Date.prototype.addDays = function(days) {
-    return date.addHours(days * 24);
-}
+var isDebug = window.location.port ? true : false;
 
 function GetTrueSize(s) {
     return s / 9.461e+12;
@@ -39,13 +28,13 @@ function updateCanvas() {
 
 window.onresize = function() {
     logData.resize = { iw: window.innerWidth, ih: window.innerHeight };
-    updateCanvas()
-}
+    updateCanvas();
+};
 
 var isPortrait = window.orientation % 180;
 
 function Sleep(milliseconds) {
-    return new Promise(resolve => setTimeout(resolve, milliseconds));
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 function orientationChanged() {
@@ -76,46 +65,45 @@ window.onorientationchange = function() {
 var font;
 var maxDist;
 
-function renderPlanet(p) {
-    ambientMaterial(p.color);
-    ambientLight(p.color.h, 50, 15);
-
-    sphere(p.GetSize());
-};
-
-function InitPlanet(planet, sizeInKm, color) {
+function ExtendPlanet(planet, sizeInKm, color) {
 
     planet.GetSize = () => sizeFunction(sizeInKm / 2);
     planet.color = color;
-    planet.render = () => renderPlanet(planet);
+    planet.render = () => {
+        lightFalloff(1, 0, 0);
+        ambientMaterial(planet.color);
+        ambientLight(planet.color.h, 50, 5);
+
+        sphere(planet.GetSize());
+    };
 
     return planet;
 }
 
 function setup() {
+    colorMode(HSL, 360, 100, 100);
+    angleMode(DEGREES);
+
     canvas = createCanvas(window.innerWidth, window.innerHeight, WEBGL);
     cam = createCamera();
-    cam.perspective(PI / 3.0, width / height, 0.1, 100000);
 
     cam.lookAt(0, 0, 0);
-    cam.setPosition(0, -(height / 2) / tan(PI / 6), 0);
-    cam.tilt(HALF_PI);
-
-    colorMode(HSL, 360, 100, 100);
+    cam.setPosition(0, 250, 0);
+    cam.tilt(-90);
 
     loadFont('The_Bellovia_Sans.ttf', f => font = f);
 
-    planets.push(InitPlanet(Astronomy.Sun, 696340, color('white')));
-    planets.push(InitPlanet(Astronomy.Mercury, 2439.7, color(25, 84, 81)));
-    planets.push(InitPlanet(Astronomy.Venus, 6051.8, color(0, 100, 91)));
-    planets.push(InitPlanet(Astronomy.Earth, 6371, color(208, 100, 81)));
-    planets.push(InitPlanet(Astronomy.Moon, 1737.4, color(200, 100, 99)));
-    planets.push(InitPlanet(Astronomy.Mars, 3389.5, color(10, 96, 65)));
-    planets.push(InitPlanet(Astronomy.Jupiter, 69911, color(35, 100, 80)));
-    planets.push(InitPlanet(Astronomy.Saturn, 58232, color(59, 100, 75)));
-    planets.push(InitPlanet(Astronomy.Uranus, 25362, color(216, 100, 81)));
-    planets.push(InitPlanet(Astronomy.Neptune, 24622, color(230, 70, 70)));
-    planets.push(InitPlanet(Astronomy.Pluto, 1188.3, color(213, 100, 96)));
+    planets.push(ExtendPlanet(Astronomy.Sun, 696340, color('white')));
+    planets.push(ExtendPlanet(Astronomy.Earth, 6371, color(208, 100, 81)));
+    planets.push(ExtendPlanet(Astronomy.Mercury, 2439.7, color(25, 84, 81)));
+    planets.push(ExtendPlanet(Astronomy.Venus, 6051.8, color(0, 100, 91)));
+    planets.push(ExtendPlanet(Astronomy.Moon, 1737.4, color(200, 100, 99)));
+    planets.push(ExtendPlanet(Astronomy.Mars, 3389.5, color(10, 96, 65)));
+    planets.push(ExtendPlanet(Astronomy.Jupiter, 69911, color(35, 100, 80)));
+    planets.push(ExtendPlanet(Astronomy.Saturn, 58232, color(59, 100, 75)));
+    planets.push(ExtendPlanet(Astronomy.Uranus, 25362, color(216, 100, 81)));
+    planets.push(ExtendPlanet(Astronomy.Neptune, 24622, color(230, 70, 70)));
+    planets.push(ExtendPlanet(Astronomy.Pluto, 1188.3, color(213, 100, 96)));
 
     Astronomy.Sun.render = function() {
         emissiveMaterial(38, 100, 65);
@@ -156,96 +144,150 @@ function setup() {
 
 }
 
-var logData = {};
+var logData = { dir: dir };
 
 var rot = 0;
 var date = new Date();
 
-var pf = 30;
+var pf = 5;
 var pf2 = 1;
 
+var fov = 180;
+var dir = 0;
+
 function draw() {
-    logData.pf = pf;
-
-    cam.perspective(PI / (3.0 * pf), width / height, 0.1, 100000);
-
-    var ddDist = cam.eyeY + ((height / 2) / tan(PI / (6.0 * pf)));
-
     height = canvas.elt.clientHeight;
     width = canvas.elt.clientWidth;
 
+    cam.ortho(-width / 2, width / 2, height / 2, -height / 2, 0, 500);
+
     background(0);
     smooth();
-
-    logData.width = width;
-    logData.heigth = height;
-
-    //var date = new Date().addDays(frameCount).addHours(frameCount / 60 * 24);
-    var day = Astronomy.DayValue(date);
-
-    rotateX(HALF_PI);
+    rotateX(90);
 
     push();
-    translate(0, 0, -ddDist);
+    drawPlanets();
+    pop();
+
+    push();
+    translate(0, 0, 0);
     drawUi();
     pop();
 
+    function drawPlanets() {
+        //date = new Date().addDays(frameCount).addHours(frameCount / 60 * 24);
+        var day = Astronomy.DayValue(date);
+
+        scale(scaling * pf);
+
+        noStroke();
+
+        var sunPos = renderPlanet(Astronomy.Sun, day);
+        var earthPos = renderPlanet(Astronomy.Earth, day, sunPos);
+        renderFromEarth(Astronomy.Sun, sunPos, earthPos);
+        for (var planet of planets.slice(2)) {
+            var pos = renderPlanet(planet, day, sunPos);
+            renderFromEarth(planet, pos, earthPos);
+        }
+
+        drawFov(earthPos);
+    }
+}
+
+function renderPlanet(planet, day, sunPos) {
     push();
 
-    noStroke();
+    var position = planet.EclipticVector(day);
 
-    scale(scaling);
-
-    var sunPos = Astronomy.Sun.EclipticCartesianCoordinates(day);
-    //pointLight(255, 255, 255, sunPos.x, sunPos.z, sunPos.y);
-    for (var planet of planets) {
-        push();
-        var position = planet.EclipticCartesianCoordinates(day);
-
-        if (planet !== Astronomy.Sun) {
-            directionalLight(0, 0, 100, position.x - sunPos.x, position.z - sunPos.z, -(position.y - sunPos.y));
-        }
-        translate(position.x, -position.y, position.z);
-        planet.render();
-        noLights();
-
-        pop();
+    if (sunPos) {
+        var ligthDir = p5.Vector.sub(position, sunPos);
+        directionalLight(255, 255, 255, ligthDir.x, ligthDir.z, -ligthDir.y);
     }
-    pop();
+    translate(position.x, -position.y, position.z);
+    planet.render()
+    noLights();
 
+    pop();
+    return position;
+}
+
+function renderFromEarth(planet, pos, earthPos) {
+    push();
+
+    var ligthDir = p5.Vector.sub(pos, earthPos);
+    directionalLight(255, 255, 255, ligthDir.x, ligthDir.z, -ligthDir.y);
+
+    translate(pos.x, -pos.y, pos.z);
+    //planet.render();
+    noLights();
+
+    pop();
+}
+
+function drawFov(earthPos) {
+    push();
+    translate(earthPos.x, -earthPos.y, earthPos.z + 0.1);
+
+    strokeWeight(2);
+
+    var fovDir = new p5.Vector(0, 1, 0).mult(maxDist);
+
+    var for2 = fov / 2;
+    fovDir = fovDir.rotateAround(new p5.Vector(0, 0, -1), for2 + dir);
+
+    var stepCnt = 10;
+    var step = for2 / stepCnt;
+    var raystrength = 20;
+    for (var i = 0; i <= stepCnt; i++) {
+        var c = (1 - (i / stepCnt)) * 0.6 + 0.4;
+        stroke(c * c * raystrength);
+        line(0, 0, 0, fovDir.x, fovDir.y, fovDir.z);
+        fovDir = fovDir.rotateAround(new p5.Vector(0, 0, 1), step);
+    }
+    for (var i = 0; i < stepCnt; i++) {
+        var c = (i / stepCnt) * 0.6 + 0.4;
+        stroke(c * c * raystrength);
+        line(0, 0, 0, fovDir.x, fovDir.y, fovDir.z);
+        fovDir = fovDir.rotateAround(new p5.Vector(0, 0, 1), step);
+    }
+
+    pop();
 }
 
 function drawUi() {
-    push();
-    stroke('red');
-    strokeWeight(2);
-    noFill();
-    translate(-width / 2, -height / 2);
-    rect(1, 1, width - 2, height - 2);
-    stroke('green');
-    translate(-width / 2, -height / 2);
-    rect(1, 1, width * 2 - 2, height * 2 - 2);
-    pop();
+    drawFrame();
 
     if (font) {
         push();
         textFont(font);
-        textSize(24);
         fill(255, 100, 100);
 
         push();
         logData.top = -height / 2 + 20;
-        translate(0, -height / 2 + 20);
-        text(date.getDate(), -20, 0);
-        text('.' + (date.getMonth() + 1), 0, 0);
-        text('.' + date.getFullYear(), 20, 0);
+        translate(-width / 2, -height / 2 + 2);
+        var partWidth = width / 6;
+
+        textSize(partWidth / 2);
+        textAlign(CENTER, TOP);
+
+        text(date.getFullYear(), 0, 0, partWidth * 2, height);
+        translate(partWidth * 2, 0);
+        text('.', 0, 0);
+        text((date.getMonth() + 1), 0, 0, partWidth, height);
+        translate(partWidth, 0);
+        text('.', 0, 0);
+        text(date.getDate(), 0, 0, partWidth, height);
+        translate(partWidth, 0);
+        text(date.getHours(), 0, 0, partWidth, height);
+        translate(partWidth, 0);
+        text(':', 0, 0);
+        text(date.getMinutes(), 0, 0, partWidth, height);
 
         pop();
 
         textSize(12);
         if (isDebug)
-        //text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
-            text(JSON.stringify(logData, null, '\t'), 0, 0, width, height - 40);
+            text(JSON.stringify(logData, null, '\t'), -width / 2, -height / 2 + 40, width, height - 40);
         pop();
     }
 }
@@ -273,11 +315,26 @@ window.addEventListener('wheel', function(event) {
     event.preventDefault();
 }, { passive: false });
 
+function drawFrame() {
+    push();
+    stroke('red');
+    strokeWeight(2);
+    noFill();
+    translate(-width / 2, -height / 2);
+    rect(1, 1, width - 2, height - 2);
+    stroke('green');
+    translate(-width / 2, -height / 2);
+    rect(1, 1, width * 2 - 2, height * 2 - 2);
+    pop();
+}
+
 function mouseWheel(event) {
-    if (crtlPressed)
-        pf = Math.min(Math.max(1, pf * (1 + event.delta / 10000)), 50);
-    else
-        date = date.addDays(Math.sign(event.delta) * 0.5);
+
+    //    pf = Math.min(Math.max(1, pf * (1 + event.delta / 10000)), 50);
+    zoom(mouseX, mouseY, event.delta / 100);
+
+
+    //    date = date.addDays(Math.sign(event.delta) * 0.5);
 }
 
 var crtlPressed = false;
@@ -293,3 +350,42 @@ function keyReleased() {
         crtlPressed = false;
     print(keyCode);
 }
+
+
+function zoom(x, y, delta) {
+    getZoom(x, y)(delta);
+};
+
+function getZoom(x, y) {
+    print(y);
+    if (y < 50) {
+        var partWidth = width / 6;
+        switch (Math.floor(~~(x / partWidth))) {
+            case 0:
+            case 1:
+                return zoomYear;
+            case 2:
+                return zoomMonth;
+            case 3:
+                return zoomDay;
+            case 4:
+                return zoomHour;
+            case 5:
+                return zoomMinute;
+        }
+    }
+    return zoomDir;
+}
+
+function zoomMinute(delta) { date = date.addSeconds(-delta * 60); }
+
+function zoomHour(delta) { date = date.addHours(-delta); }
+
+function zoomDay(delta) { date = date.addDays(-delta); }
+
+function zoomMonth(delta) { date = date.addMonths(-delta); }
+
+function zoomYear(delta) { date = date.addYears(-delta); }
+
+function zoomDir(delta) { dir += (delta);
+    logData.dir = dir; }
