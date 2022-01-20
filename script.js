@@ -255,7 +255,7 @@ function drawFov(earthPos) {
 }
 
 function drawUi() {
-    //drawFrame();
+    drawFrame();
 
     if (font) {
         push();
