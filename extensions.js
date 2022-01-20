@@ -44,3 +44,19 @@ Date.prototype.addSeconds = function (s) {
 Date.prototype.addDays = function (days) {
     return this.addHours(days * 24);
 };
+
+Date.prototype.addMonths = function (months) {
+    date = new Date(this);
+    var d = date.getDate();
+    date.setMonth(date.getMonth() + months);
+    if (date.getDate() != d) {
+      date.setDate(0);
+    }
+    return date;
+};
+
+Date.prototype.addYears = function (years) {
+    date = new Date(this);
+    date.setFullYear(date.getFullYear() + years);
+    return date;
+};

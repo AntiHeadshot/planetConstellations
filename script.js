@@ -144,7 +144,7 @@ function setup() {
 
 }
 
-var logData = {dir:dir};
+var logData = { dir: dir };
 
 var rot = 0;
 var date = new Date();
@@ -164,7 +164,7 @@ function draw() {
     background(0);
     smooth();
     rotateX(90);
-    
+
     push();
     drawPlanets();
     pop();
@@ -260,15 +260,28 @@ function drawUi() {
     if (font) {
         push();
         textFont(font);
-        textSize(24);
         fill(255, 100, 100);
 
         push();
         logData.top = -height / 2 + 20;
-        translate(0, -height / 2 + 20);
-        text(date.getDate(), -20, 0);
-        text('.' + (date.getMonth() + 1), 0, 0);
-        text('.' + date.getFullYear(), 20, 0);
+        translate(-width / 2, -height / 2 + 2);
+        var partWidth = width / 6;
+
+        textSize(partWidth / 2);
+        textAlign(CENTER, TOP);
+
+        text(date.getFullYear(), 0, 0, partWidth * 2, height);
+        translate(partWidth * 2, 0);
+        text('.', 0, 0);
+        text((date.getMonth() + 1), 0, 0, partWidth, height);
+        translate(partWidth, 0);
+        text('.', 0, 0);
+        text(date.getDate(), 0, 0, partWidth, height);
+        translate(partWidth, 0);
+        text(date.getHours(), 0, 0, partWidth, height);
+        translate(partWidth, 0);
+        text(':', 0, 0);
+        text(date.getMinutes(), 0, 0, partWidth, height);
 
         pop();
 
@@ -318,8 +331,9 @@ function drawFrame() {
 function mouseWheel(event) {
 
     //    pf = Math.min(Math.max(1, pf * (1 + event.delta / 10000)), 50);
-    dir += (event.delta / 100);
-    logData.dir = dir;
+    zoom(mouseX, mouseY, event.delta / 100);
+
+
     //    date = date.addDays(Math.sign(event.delta) * 0.5);
 }
 
@@ -336,3 +350,32 @@ function keyReleased() {
         crtlPressed = false;
     print(keyCode);
 }
+
+
+function zoom(x, y, delta) {
+    getZoom(x, y)(delta);
+};
+
+function getZoom(x, y) {
+    print(y);
+    if (y < 50) {
+        var partWidth = width / 6;
+        switch (Math.floor(~~(x / partWidth))) {
+            case 0:
+            case 1: return zoomYear;
+            case 2: return zoomMonth;
+            case 3: return zoomDay;
+            case 4: return zoomHour;
+            case 5: return zoomMinute;
+        }
+    }
+    return zoomDir;
+}
+
+function zoomMinute(delta) { date = date.addSeconds(-delta * 60); }
+function zoomHour(delta) { date = date.addHours(-delta); }
+function zoomDay(delta) { date = date.addDays(-delta); }
+function zoomMonth(delta) { date = date.addMonths(-delta); }
+function zoomYear(delta) { date = date.addYears(-delta); }
+
+function zoomDir(delta) { dir += (delta); logData.dir = dir; }
