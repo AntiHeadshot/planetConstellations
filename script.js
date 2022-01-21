@@ -134,6 +134,8 @@ function setup() {
 
     mc.on("pinchin pinchout", e => {
         pf = Math.min(Math.max(1, e.scale * pf2), 50);
+        logData.e = e;
+        zoom(e.pointers[0].x,e.pointers[0].y, pf2*pf);
     });
     mc.on("rotatemove", e => {
         var angDist = rot - e.rotation;
