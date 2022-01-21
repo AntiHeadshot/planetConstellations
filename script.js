@@ -1,7 +1,7 @@
 'use strict';
 
 window.onerror = function myErrorHandler(errorMsg, url, lineNumber) {
-    alert("Error occured: " + errorMsg); //or any message
+    //alert("Error occured: " + errorMsg); //or any message
     logData.error = errorMsg;
     return false;
 }
@@ -67,7 +67,6 @@ function orientationChanged() {
 }
 
 window.onorientationchange = function() {
-    //alert(window.orientation);
     orientationChanged().then(function() {
         isPortrait = window.orientation % 180;
         updateCanvas();
@@ -186,8 +185,6 @@ function draw() {
         cam.tilt(-90);
     }
     cam.ortho(-width / 2, width / 2, height / 2, -height / 2, 0, 500);
-    //cam.tilt(mouseX);
-    //cam.pan(mouseY);
 
     background(0);
     smooth();
