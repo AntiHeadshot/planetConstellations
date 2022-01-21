@@ -1,4 +1,4 @@
-p5.Vector.prototype.rotateAround = function (axis, angle) {
+p5.Vector.prototype.rotateAround = function(axis, angle) {
     // Make sure our axis is a unit vector
     axis = p5.Vector.normalize(axis);
 
@@ -20,7 +20,7 @@ p5.Vector.prototype.rotateAround = function (axis, angle) {
     );
 }
 
-p5.Vector.prototype.vrrot = function (b) {
+p5.Vector.prototype.vrrot = function(b) {
     var an = p5.Vector.normalize(this);
     var bn = p5.Vector.normalize(b);
     var axb = p5.Vector.cross(an, bn).normalize();
@@ -31,32 +31,34 @@ p5.Vector.prototype.vrrot = function (b) {
     return { axis: axb, ang: ac };
 }
 
-Date.prototype.addHours = function (h) {
+Date.prototype.addHours = function(h) {
     this.setTime(this.getTime() + (h * 60 * 60 * 1000));
     return this;
 };
 
-Date.prototype.addSeconds = function (s) {
+Date.prototype.addSeconds = function(s) {
     this.setTime(this.getTime() + (s * 1000));
     return this;
 };
 
-Date.prototype.addDays = function (days) {
+Date.prototype.addDays = function(days) {
     return this.addHours(days * 24);
 };
 
-Date.prototype.addMonths = function (months) {
+Date.prototype.addMonths = function(months) {
     date = new Date(this);
     var d = date.getDate();
     date.setMonth(date.getMonth() + months);
     if (date.getDate() != d) {
-      date.setDate(0);
+        date.setDate(0);
     }
     return date;
 };
 
-Date.prototype.addYears = function (years) {
+Date.prototype.addYears = function(years) {
     date = new Date(this);
     date.setFullYear(date.getFullYear() + years);
     return date;
 };
+
+Number.prototype.padStart = function(places) { return String(this).padStart(places, '0') };
