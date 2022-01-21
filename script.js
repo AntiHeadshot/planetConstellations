@@ -1,6 +1,6 @@
 'use strict';
 
-document.addEventListener('gesturestart', function (e) {
+document.addEventListener('gesturestart', function(e) {
     e.preventDefault();
 });
 var isDebug = window.location.port ? true : false;
@@ -26,7 +26,7 @@ function updateCanvas() {
     scaling = Math.min(width, height) / (maxDist * 2);
 }
 
-window.onresize = function () {
+window.onresize = function() {
     logData.resize = { iw: window.innerWidth, ih: window.innerHeight };
     updateCanvas();
 };
@@ -39,7 +39,7 @@ function Sleep(milliseconds) {
 
 function orientationChanged() {
     const timeout = 1000;
-    return new window.Promise(function (resolve) {
+    return new window.Promise(function(resolve) {
         let height0 = window.innerHeight;
         let i = 0;
         do {
@@ -53,10 +53,10 @@ function orientationChanged() {
     });
 }
 
-window.onorientationchange = function () {
+window.onorientationchange = function() {
     logData.orientation++;
     //alert(window.orientation);
-    orientationChanged().then(function () {
+    orientationChanged().then(function() {
         isPortrait = window.orientation % 180;
         updateCanvas();
     });
@@ -105,7 +105,7 @@ function setup() {
     planets.push(ExtendPlanet(Astronomy.Neptune, 24622, color(230, 70, 70)));
     planets.push(ExtendPlanet(Astronomy.Pluto, 1188.3, color(213, 100, 96)));
 
-    Astronomy.Sun.render = function () {
+    Astronomy.Sun.render = function() {
         emissiveMaterial(38, 100, 65);
         sphere(this.GetSize());
     };
@@ -313,7 +313,7 @@ function drawUi() {
 //     mY = undefined;
 // }
 
-window.addEventListener('wheel', function (event) {
+window.addEventListener('wheel', function(event) {
     event.preventDefault();
 }, { passive: false });
 
@@ -364,20 +364,30 @@ function getZoom(x, y) {
         var partWidth = width / 6;
         switch (Math.floor(~~(x / partWidth))) {
             case 0:
-            case 1: return zoomYear;
-            case 2: return zoomMonth;
-            case 3: return zoomDay;
-            case 4: return zoomHour;
-            case 5: return zoomMinute;
+            case 1:
+                return zoomYear;
+            case 2:
+                return zoomMonth;
+            case 3:
+                return zoomDay;
+            case 4:
+                return zoomHour;
+            case 5:
+                return zoomMinute;
         }
     }
     return zoomDir;
 }
 
 function zoomMinute(delta) { date = date.addSeconds(-delta * 60); }
+
 function zoomHour(delta) { date = date.addHours(-delta); }
+
 function zoomDay(delta) { date = date.addDays(-delta); }
+
 function zoomMonth(delta) { date = date.addMonths(-delta); }
+
 function zoomYear(delta) { date = date.addYears(-delta); }
 
-function zoomDir(delta) { dir += (delta); logData.dir = dir; }
+function zoomDir(delta) { dir += (delta);
+    logData.dir = dir; }
