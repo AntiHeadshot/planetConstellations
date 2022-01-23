@@ -22,44 +22,44 @@ function AngleClass() {
     this.HOURS_FROM_RAD = 12.0 / Math.PI;
     this.RAD_FROM_HOURS = Math.PI / 12.0;
 
-    this.CosDeg = function (degrees) {
+    this.CosDeg = function(degrees) {
         return Math.cos(this.RAD_FROM_DEG * degrees);
     }
 
-    this.SinDeg = function (degrees) {
+    this.SinDeg = function(degrees) {
         return Math.sin(this.RAD_FROM_DEG * degrees);
     }
 
-    this.TanDeg = function (degrees) {
+    this.TanDeg = function(degrees) {
         return Math.tan(this.RAD_FROM_DEG * degrees);
     }
 
-    this.CosHour = function (hours) {
+    this.CosHour = function(hours) {
         return Math.cos(this.RAD_FROM_HOURS * hours);
     }
 
-    this.SinHour = function (hours) {
+    this.SinHour = function(hours) {
         return Math.sin(this.RAD_FROM_HOURS * hours);
     }
 
-    this.AtanDeg2 = function (y, x) {
+    this.AtanDeg2 = function(y, x) {
         return this.DEG_FROM_RAD * Math.atan2(y, x);
     }
 
-    this.FixHours = function (hours) {
+    this.FixHours = function(hours) {
         return this.FixCycle(hours, 24.0);
     }
 
-    this.FixDegrees = function (degrees) {
+    this.FixDegrees = function(degrees) {
         return this.FixCycle(degrees, 360.0);
     }
 
-    this.FixCycle = function (angle, cycle) {
+    this.FixCycle = function(angle, cycle) {
         var fraction = angle / cycle;
         return cycle * (fraction - Math.floor(fraction));
     }
 
-    this.Polar = function (x, y, z) {
+    this.Polar = function(x, y, z) {
         var rho = (x * x) + (y * y);
         var radius = Math.sqrt(rho + (z * z));
         var phi = Angle.AtanDeg2(y, x);
@@ -71,7 +71,7 @@ function AngleClass() {
         return new SphericalCoordinates(phi, theta, radius);
     }
 
-    this.DMS = function (x) {
+    this.DMS = function(x) {
         var a = {};
 
         a.negative = (x < 0);
@@ -96,7 +96,7 @@ function AngleClass() {
         return a;
     }
 
-    this.DMM = function (x) {
+    this.DMM = function(x) {
         var a = {};
         a.negative = (x < 0);
         if (a.negative) {
@@ -116,7 +116,7 @@ function AngleClass() {
         return a;
     }
 
-    this.SafeArcSinInDegrees = function (z) {
+    this.SafeArcSinInDegrees = function(z) {
         var abs = Math.abs(z);
         if (abs > 1.0) {
             // Guard against blowing up due to slight roundoff errors in Math.Asin ...
@@ -163,24 +163,24 @@ function Log10(x) {
 //----------------------------------------------------------------------------------------------
 
 function SunClass() {
-    this.Name = "Sun";
+    this.Name = "Sonne";
 
-    this.EclipticVector = function (day) {
+    this.EclipticVector = function(day) {
         return new p5.Vector(0.0, 0.0, 0.0);
     }
 
-    this.EclipticAngularCoordinates = function (day) {
+    this.EclipticAngularCoordinates = function(day) {
         return new SphericalCoordinates(0.0, 0.0, 0.0);
     }
 
     this.GeocentricCoordinates = DefaultGeocentricCoordinates;
     this.EquatorialCoordinates = EqCoords;
 
-    this.DistanceFromEarth = function (day) {
+    this.DistanceFromEarth = function(day) {
         return Astronomy.Earth.EclipticVector(day).mag();
     }
 
-    this.DistanceFromSun = function (day) {
+    this.DistanceFromSun = function(day) {
         return 0.0;
     }
 
@@ -188,7 +188,7 @@ function SunClass() {
 
     this.RadiusInMeters = 6.96e+8;
 
-    this.VisualMagnitude = function (day) {
+    this.VisualMagnitude = function(day) {
         var e = this.DistanceFromEarth(day);
         return -26.73 + (5.0 * Log10(e));
     }
@@ -197,9 +197,9 @@ function SunClass() {
 //----------------------------------------------------------------------------------------------
 
 function EarthClass() {
-    this.Name = "Earth";
+    this.Name = "Erde";
 
-    this.EclipticVector = function (day) {
+    this.EclipticVector = function(day) {
         // We use formulas for finding the Sun as seen from Earth, 
         // then negate the (x,y,z) coordinates obtained to get the Earth's position 
         // from the Sun's perspective.
@@ -230,21 +230,21 @@ function EarthClass() {
 
     this.EclipticAngularCoordinates = DefaultEclipticAngularCoordinates;
 
-    this.GeocentricCoordinates = function (day) {
+    this.GeocentricCoordinates = function(day) {
         return new p5.Vector(0.0, 0.0, 0.0);
     }
 
     this.EquatorialCoordinates = EqCoords;
 
-    this.DistanceFromEarth = function (day) {
+    this.DistanceFromEarth = function(day) {
         return 0.0; // included for completeness and consistency of planet interface
     }
 
-    this.DistanceFromSun = function (day) {
+    this.DistanceFromSun = function(day) {
         return this.EclipticVector(day).mag();
     }
 
-    this.VisualMagnitude = function (day) {
+    this.VisualMagnitude = function(day) {
         throw "Cannot calculate visual magnitude for Earth!";
     }
 }
@@ -254,7 +254,7 @@ function EarthClass() {
 
 function PlutoClass() {
     this.Name = "Pluto";
-    this.EclipticVector = function (day) {
+    this.EclipticVector = function(day) {
         var S = 50.03 + (0.033459652 * day);
         var P = 238.95 + (0.003968789 * day);
 
@@ -297,15 +297,15 @@ function PlutoClass() {
     this.EclipticAngularCoordinates = DefaultEclipticAngularCoordinates;
     this.GeocentricCoordinates = DefaultGeocentricCoordinates;
     this.EquatorialCoordinates = EqCoords;
-    this.DistanceFromEarth = function (day) {
+    this.DistanceFromEarth = function(day) {
         return this.GeocentricCoordinates(day).mag();
     }
 
-    this.DistanceFromSun = function (day) {
+    this.DistanceFromSun = function(day) {
         return this.EclipticVector(day).mag();
     }
 
-    this.VisualMagnitude = function (day) {
+    this.VisualMagnitude = function(day) {
         var s = this.DistanceFromSun(day);
         var e = this.DistanceFromEarth(day);
         return 14.0 + (5.0 * Log10((e * s) / (31.97177 * 31.982))); // a hack that ignores phase angle, based on data from http://www.heavens-above.com
@@ -349,23 +349,23 @@ function PlanetPS( // See  http://www.stjarnhimlen.se/comp/ppcomp.html#4
 PlanetPS.prototype.HorizontalCoordinates = DefaultHorizontalCoordinates;
 PlanetPS.prototype.EclipticAngularCoordinates = DefaultEclipticAngularCoordinates;
 
-PlanetPS.prototype.MeanAnomaly = function (day) // day = number of days elapsed since December 31, 1999 0:00 UTC, i.e. JD 2451543.5
-{
-    return this.M0 + (day * this.Mc);
-}
+PlanetPS.prototype.MeanAnomaly = function(day) // day = number of days elapsed since December 31, 1999 0:00 UTC, i.e. JD 2451543.5
+    {
+        return this.M0 + (day * this.Mc);
+    }
 
-PlanetPS.prototype.NodeLongitude = function (day) {
+PlanetPS.prototype.NodeLongitude = function(day) {
     return this.N0 + (day * this.Nc);
 }
 
-PlanetPS.prototype.Perihelion = function (day) {
+PlanetPS.prototype.Perihelion = function(day) {
     return this.w0 + (day * this.wc);
 }
 
 PlanetPS.prototype.GeocentricCoordinates = DefaultGeocentricCoordinates;
 PlanetPS.prototype.EquatorialCoordinates = EqCoords;
 
-PlanetPS.prototype.EclipticVector = function (day) {
+PlanetPS.prototype.EclipticVector = function(day) {
     var a = this.a0 + (day * this.ac);
     var e = this.e0 + (day * this.ec);
     var M = this.M0 + (day * this.Mc);
@@ -396,25 +396,25 @@ PlanetPS.prototype.EclipticVector = function (day) {
     return this.Perturb(xh, yh, zh, day);
 }
 
-PlanetPS.prototype.Perturb = function (xh, yh, zh, day) {
+PlanetPS.prototype.Perturb = function(xh, yh, zh, day) {
     // By default we apply no perturbations.
     // Some planets will override this method so that they can correct for
     // the gravitational influences of other planets.
     return new p5.Vector(xh, yh, zh);
 }
 
-PlanetPS.prototype.DistanceFromEarth = function (day) // returns the distance of this planet from Earth in astronomical units (AU)
-{
-    return this.GeocentricCoordinates(day).mag();
-}
+PlanetPS.prototype.DistanceFromEarth = function(day) // returns the distance of this planet from Earth in astronomical units (AU)
+    {
+        return this.GeocentricCoordinates(day).mag();
+    }
 
 
-PlanetPS.prototype.DistanceFromSun = function (day) {
+PlanetPS.prototype.DistanceFromSun = function(day) {
     return this.EclipticVector(day).mag();
 }
 
 
-PlanetPS.prototype.VisualMagnitude = function (day) {
+PlanetPS.prototype.VisualMagnitude = function(day) {
     var distEarth = this.DistanceFromEarth(day);
     var distSun = this.DistanceFromSun(day);
     var phase = Astronomy.SunEarthPhaseAngle(this, day);
@@ -428,7 +428,7 @@ PlanetPS.prototype.VisualMagnitude = function (day) {
 
 function EccentricAnomaly(e, M) {
     var E = M + (e * Angle.SinDeg(M) * (1.0 + (e * Angle.CosDeg(M))));
-    for (; ;) {
+    for (;;) {
         var F = E - (E - (Angle.DEG_FROM_RAD * e * Angle.SinDeg(E)) - M) / (1 - e * Angle.CosDeg(E));
         var error = Math.abs(F - E);
         E = F;
@@ -721,14 +721,14 @@ function CreateAsteroid(
     return p;
 }
 
-function CreateComet( /*see arguments for CreateAsteroid*/) {
+function CreateComet( /*see arguments for CreateAsteroid*/ ) {
     // Pass along the same arguments to "CreateAsteroid".
     var comet = CreateAsteroid.apply(this, arguments);
     comet.BodyType = 'comet'; // change body type from 'asteroid' to 'comet'.
     return comet;
 }
 
-function CreateMinor( /*see arguments for CreateAsteroid*/) {
+function CreateMinor( /*see arguments for CreateAsteroid*/ ) {
     // Pass along the same arguments to "CreateAsteroid".
     var comet = CreateAsteroid.apply(this, arguments);
     comet.BodyType = 'minor'; // indicate that this is a minor asteroid
@@ -824,7 +824,7 @@ function CreateSaturnJPL() {
     planet.PerturbEclipticLatitude = PerturbEclipticLatitude_Saturn; // method called by PerturbMajorPlanet
     planet.__BaseVisualMagnitude = planet.VisualMagnitude; // we override the base function to also include a factor for the rings...
 
-    planet.VisualMagnitude = function (day) {
+    planet.VisualMagnitude = function(day) {
         var planetMagnitude = this.__BaseVisualMagnitude(day); // get magnitude of the planet body itself.
 
         var Ir = 28.06; // inclination of Saturn's rings to ecliptic, in degrees
@@ -862,7 +862,7 @@ function CreateSaturn() {
     planet.PerturbEclipticLatitude = PerturbEclipticLatitude_Saturn; // method called by PerturbMajorPlanet
     planet.__BaseVisualMagnitude = planet.VisualMagnitude; // we override the base function to also include a factor for the rings...
 
-    planet.VisualMagnitude = function (day) {
+    planet.VisualMagnitude = function(day) {
         var planetMagnitude = this.__BaseVisualMagnitude(day); // get magnitude of the planet body itself.
 
         var Ir = 28.06; // inclination of Saturn's rings to ecliptic, in degrees
@@ -922,12 +922,12 @@ function MeanLongitudeOfSun(d) {
 
 function CreateMoon() {
     var moon = new PlanetPS(
-        "Moon",
+        "Mond",
         125.1228, -0.0529538083, 5.1454, 0, 318.0634, 0.1643573223, 60.2666 / EARTH_RADII_PER_ASTRONOMICAL_UNIT, 0, 0.054900, 0, 115.3654, 13.0649929509,
         0.23, 0.026, 4.0e-9, 4
     );
 
-    moon.EclipticVector = function (day) {
+    moon.EclipticVector = function(day) {
         var mc = this.GeocentricCoordinates(day);
         var ec = Astronomy.Earth.EclipticVector(day);
         return ec.add(mc);
@@ -935,7 +935,7 @@ function CreateMoon() {
 
     moon.GeocentricCoordinates = PlanetPS.prototype.EclipticVector; // Moon uses same formulas as planet, but results in geocentric values!
 
-    moon.Perturb = function (xh, yh, zh, d) {
+    moon.Perturb = function(xh, yh, zh, d) {
         var Ms = MeanAnomalyOfSun(d); // mean anomaly of Sun
         var ws = SunArgumentOfPerihelion(d); // Sun's argument of perihelion
         var Ls = Ms + ws; // mean longitude of Sun
@@ -1001,25 +1001,25 @@ function CreateMoon() {
 
 
 function AstronomyClass() {
-    this.DayValue = function (utc) {
+    this.DayValue = function(utc) {
         // http://www.elated.com/articles/working-with-dates/
         // Return number of days since 0/Jan/2000 00:00 UTC...
         return 1.0 + (utc.getTime() - Date.UTC(2000, 0, 1)) / (3600.0 * 24.0 * 1000.0);
     }
 
-    this.DaysSinceJ2000 = function (day) {
+    this.DaysSinceJ2000 = function(day) {
         return day - 1.5;
     }
 
-    this.CenturiesSinceJ2000 = function (day) {
+    this.CenturiesSinceJ2000 = function(day) {
         return this.DaysSinceJ2000(day) / 36525.0;
     }
 
-    this.CurrentDayValue = function (utc) {
+    this.CurrentDayValue = function(utc) {
         return this.DayValue(new Date());
     }
 
-    this.DayValueToDate = function (day) {
+    this.DayValueToDate = function(day) {
         var date = new Date();
         var M = 3600.0 * 24.0 * 1000.0;
         var T0 = Date.UTC(2000, 0, 1);
@@ -1027,83 +1027,83 @@ function AstronomyClass() {
         return date;
     }
 
-    this.EclipticLatLon = function (x, y, z) {
+    this.EclipticLatLon = function(x, y, z) {
         return { 'longitude': Angle.AtanDeg2(y, x), 'latitude': Angle.AtanDeg2(z, Math.sqrt(x * x + y * y)) };
     }
 
-    this.NextRiseTime = function (body, day, location) {
+    this.NextRiseTime = function(body, day, location) {
         return Astronomy_FindNextTransition(body, day, day + 1.1, location, Astronomy_RiseCondition, 3);
     }
 
-    this.NextSetTime = function (body, day, location) {
+    this.NextSetTime = function(body, day, location) {
         return Astronomy_FindNextTransition(body, day, day + 1.1, location, Astronomy_SetCondition, 3);
     }
 
-    this.NextCulmTime = function (body, day, location) {
+    this.NextCulmTime = function(body, day, location) {
         return Astronomy_FindNextTransition(body, day, day + 1.1, location, Astronomy_CulminateCondition, 6);
     }
 
-    this.NextNewMoon = function (day, numDays, numIntervals) {
+    this.NextNewMoon = function(day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(this.Moon, day, day + numDays, null, Astronomy_RelativeLongitudeCondition, numIntervals, 0.0);
     }
 
-    this.NextMoonFirstQuarter = function (day, numDays, numIntervals) {
+    this.NextMoonFirstQuarter = function(day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(this.Moon, day, day + numDays, null, Astronomy_RelativeLongitudeCondition, numIntervals, 90.0);
     }
 
-    this.NextFullMoon = function (day, numDays, numIntervals) {
+    this.NextFullMoon = function(day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(this.Moon, day, day + numDays, null, Astronomy_RelativeLongitudeCondition, numIntervals, 180.0);
     }
 
-    this.NextMoonThirdQuarter = function (day, numDays, numIntervals) {
+    this.NextMoonThirdQuarter = function(day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(this.Moon, day, day + numDays, null, Astronomy_RelativeLongitudeCondition, numIntervals, 270.0);
     }
 
-    this.NextOpposition = function (body, day, numDays, numIntervals) {
+    this.NextOpposition = function(body, day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(body, day, day + numDays, null, Astronomy_RelativeLongitudeCondition, numIntervals, 180.0);
     }
 
-    this.NextConjunction = function (body, day, numDays, numIntervals) {
+    this.NextConjunction = function(body, day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(body, day, day + numDays, null, Astronomy_RelativeLongitudeCondition, numIntervals, 0.0);
     }
 
-    this.NextMaxSunAngle = function (body, day, numDays, numIntervals) {
+    this.NextMaxSunAngle = function(body, day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(body, day, day + numDays, null, Astronomy_MaxSunAngleCondition, numIntervals);
     }
 
-    this.NextVernalEquinox = function (day, numDays, numIntervals) {
+    this.NextVernalEquinox = function(day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(this.Sun, day, day + numDays, null, Astronomy_VernalEquinoxCondition, numIntervals);
     }
 
-    this.NextAutumnalEquinox = function (day, numDays, numIntervals) {
+    this.NextAutumnalEquinox = function(day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(this.Sun, day, day + numDays, null, Astronomy_AutumnalEquinoxCondition, numIntervals);
     }
 
-    this.NextNorthernSolstice = function (day, numDays, numIntervals) {
+    this.NextNorthernSolstice = function(day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(this.Sun, day, day + numDays, null, Astronomy_NorthernSolsticeCondition, numIntervals);
     }
 
-    this.NextSouthernSolstice = function (day, numDays, numIntervals) {
+    this.NextSouthernSolstice = function(day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(this.Sun, day, day + numDays, null, Astronomy_SouthernSolsticeCondition, numIntervals);
     }
 
-    this.NextPeakVisualMagnitude = function (body, day, numDays, numIntervals) {
+    this.NextPeakVisualMagnitude = function(body, day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(body, day, day + numDays, null, Astronomy_PeakVisualMagnitudeCondition, numIntervals);
     }
 
-    this.NextMinAngleWithOtherBody = function (body, day, numDays, numIntervals, otherBody) {
+    this.NextMinAngleWithOtherBody = function(body, day, numDays, numIntervals, otherBody) {
         return Astronomy_FindNextTransition(body, day, day + numDays, null, Astronomy_MinAngleWithOtherBodyCondition, numIntervals, otherBody);
     }
 
-    this.NextMoonPerigee = function (day, numDays, numIntervals) {
+    this.NextMoonPerigee = function(day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(null, day, day + numDays, null, Astronomy_MoonPerigee, numIntervals, null);
     }
 
-    this.NextMoonApogee = function (day, numDays, numIntervals) {
+    this.NextMoonApogee = function(day, numDays, numIntervals) {
         return Astronomy_FindNextTransition(null, day, day + numDays, null, Astronomy_MoonApogee, numIntervals, null);
     }
 
-    this.SunEarthPhaseAngle = function (body, day) {
+    this.SunEarthPhaseAngle = function(body, day) {
         if (body.Name == "Sun") {
             throw "Cannot calculate SunEarthPhaseAngle of the Sun";
         } else {
@@ -1119,7 +1119,7 @@ function AstronomyClass() {
         }
     }
 
-    this.AngleWithSunInDegrees = function (body, day) {
+    this.AngleWithSunInDegrees = function(body, day) {
         if (body.Name == "Sun") {
             return 0.0;
         } else {
@@ -1129,13 +1129,13 @@ function AstronomyClass() {
         }
     }
 
-    this.AngleBetweenBodiesInDegrees = function (body1, body2, day) {
+    this.AngleBetweenBodiesInDegrees = function(body1, body2, day) {
         var a = body1.GeocentricCoordinates(day);
         var b = body2.GeocentricCoordinates(day);
         return AngleBetweenVectorsInDegrees(a, b);
     }
 
-    this.RelativeLongitude = function (body, day) {
+    this.RelativeLongitude = function(body, day) {
         // Returns the relative longitude between the body and the Sun as seen from Earth's center.
         var bc = body.GeocentricCoordinates(day);
         var sc = this.Sun.GeocentricCoordinates(day);
@@ -1146,7 +1146,7 @@ function AstronomyClass() {
         return rlon;
     }
 
-    this.PrecessionRotationMatrix = function (EPOCH1, EPOCH2) {
+    this.PrecessionRotationMatrix = function(EPOCH1, EPOCH2) {
         var CDR = Math.PI / 180.0;
         var CSR = CDR / 3600.0;
         var T = 0.001 * (EPOCH2 - EPOCH1);
@@ -1195,7 +1195,7 @@ function AstronomyClass() {
         Fortran program.f, made by FO @ CDS  (francois@simbad.u-strasbg.fr)  
         in November 1996.
     */
-    this.PrecessEquatorialCoordinates = function (eq, matrix) {
+    this.PrecessEquatorialCoordinates = function(eq, matrix) {
         // Don says: in the original C code, the RA1 and DEC1 passed in were always in radians.
         // I want to pass in hours and degrees, respectively, so convert to radians here...
         var RA1 = Angle.RAD_FROM_HOURS * eq.longitude;
@@ -1229,7 +1229,7 @@ function AstronomyClass() {
         return new SphericalCoordinates(RA2, DEC2, eq.radius);
     }
 
-    this.FindConstellation = function (eq) {
+    this.FindConstellation = function(eq) {
         var eqOld = this.PrecessEquatorialCoordinates(eq, this.ConstellationRotationMatrix);
         var ra = eqOld.longitude;
         var dec = eqOld.latitude;
@@ -1248,7 +1248,7 @@ function AstronomyClass() {
     this.Sun = new SunClass();
     this.Moon = CreateMoon();
 
-    this.Mercury = new PlanetPS("Mercury", 48.3313, 3.24587e-5, 7.0047, 5.0e-8, 29.1241, 1.01444e-5, 0.387098, 0.0, 0.205635, 5.59e-10, 168.6562, 4.0923344368, -0.36, 0.027, 2.2e-13, 6);
+    this.Mercury = new PlanetPS("Merkur", 48.3313, 3.24587e-5, 7.0047, 5.0e-8, 29.1241, 1.01444e-5, 0.387098, 0.0, 0.205635, 5.59e-10, 168.6562, 4.0923344368, -0.36, 0.027, 2.2e-13, 6);
     this.Venus = new PlanetPS("Venus", 76.6799, 2.46590e-5, 3.3946, 2.75e-8, 54.8910, 1.38374e-5, 0.723330, 0.0, 0.006773, -1.302e-9, 48.0052, 1.6021302244, -4.34, 0.013, 4.2e-7, 3);
     this.Earth = new EarthClass();
     this.Mars = new PlanetPS("Mars", 49.5574, 2.11081e-5, 1.8497, -1.78e-8, 286.5016, 2.92961e-5, 1.523688, 0.0, 0.093405, 2.516e-9, 18.6021, 0.5240207766, -1.51, 0.016, 0, 0);
@@ -1270,7 +1270,7 @@ function AstronomyClass() {
     this.Saturn = CreateSaturn();
     //this.SaturnJPL = CreateSaturnJPL();
     this.Uranus = CreateUranus();
-    this.Neptune = new PlanetPS("Neptune", 131.7806, 3.0173e-5, 1.7700, -2.55e-7, 272.8461, -6.027e-6, 30.05826, 3.313e-8, 0.008606, 2.15e-9, 260.2471, 0.005995147, -6.90, 0.001, 0, 0);
+    this.Neptune = new PlanetPS("Neptun", 131.7806, 3.0173e-5, 1.7700, -2.55e-7, 272.8461, -6.027e-6, 30.05826, 3.313e-8, 0.008606, 2.15e-9, 260.2471, 0.005995147, -6.90, 0.001, 0, 0);
     this.Pluto = new PlutoClass();
 
     this.Body = [
@@ -1298,7 +1298,7 @@ function AstronomyClass() {
         this.Pluto
     ];
 
-    this.IsBodyName = function (name) {
+    this.IsBodyName = function(name) {
         return (this[name] != null) && (this[name].Name == name);
     }
 
