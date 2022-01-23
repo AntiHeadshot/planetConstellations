@@ -9,7 +9,7 @@ window.onerror = function myErrorHandler(errorMsg, url, lineNumber) {
 document.addEventListener('gesturestart', function(e) {
     e.preventDefault();
 });
-var isDebug = window.location.port ? true : false;
+var isDebug = !!window.location.port;
 
 function getPoints(e) {
     var points = [];
@@ -23,7 +23,7 @@ function GetTrueSize(s) {
 }
 
 function GetLogSize(s) {
-    return Math.log2(5 + (s * 4.5 / 696340)) / 30;
+    return log2(5 + (s * 4.5 / 696340)) / 30;
 }
 
 var sizeFunction = GetLogSize;
@@ -36,7 +36,7 @@ var scaling = 1;
 
 function updateCanvas() {
     resizeCanvas(window.innerWidth, window.innerHeight);
-    scaling = Math.min(width, height) / (maxDist * 2);
+    scaling = (minSide = min(width, height)) / (maxDist * 2);
 }
 
 window.onresize = function() {
@@ -75,17 +75,19 @@ window.onorientationchange = function() {
 
 var font;
 var maxDist;
+var maxSize;
+var minSide;
 
 function ExtendPlanet(planet, sizeInKm, color) {
 
-    planet.GetSize = () => sizeFunction(sizeInKm / 2);
+    planet.getSize = () => sizeFunction(sizeInKm / 2);
     planet.color = color;
     planet.render = () => {
         lightFalloff(1, 0, 0);
         ambientMaterial(planet.color);
         ambientLight(planet.color.h, 50, 20);
 
-        sphere(planet.GetSize());
+        sphere(planet.getSize());
     };
 
     return planet;
@@ -113,13 +115,14 @@ function setup() {
 
     Astronomy.Sun.render = function() {
         emissiveMaterial(38, 100, 65);
-        sphere(this.GetSize());
+        sphere(this.getSize());
     };
 
     var day = Astronomy.DayValue(new Date());
-    maxDist = Math.max(...planets.map(p => p.DistanceFromSun(day)));
+    maxDist = max(...planets.map(p => p.DistanceFromSun(day)));
+    maxSize = max(...planets.map(p => p.getSize()));
 
-    scaling = Math.min(width, height) / (maxDist * 2);
+    scaling = (minSide = min(width, height)) / (maxDist * 2);
 
     var mc = new Hammer.Manager(document.body);
 
@@ -136,7 +139,7 @@ function setup() {
     });
 
     mc.on('rotatestart', e => {
-        rot = e.rotation;
+        touchRot = e.rotation;
     });
 
     mc.on("pinchin pinchout", e => {
@@ -146,11 +149,11 @@ function setup() {
         zoom(e.pointers[0].pageX, e.pointers[0].pageY, d);
     });
     mc.on("rotatemove", e => {
-        var angDist = rot - e.rotation;
+        var angDist = touchRot - e.rotation;
         angDist += (angDist > 180) ? -360 : (angDist < -180) ? 360 : 0
         dir += angDist;
         logData.dir = dir;
-        rot = e.rotation;
+        touchRot = e.rotation;
     });
 }
 
@@ -162,17 +165,25 @@ function mouseWheel(event) {
     zoom(mouseX, mouseY, event.delta / 100);
 }
 
+function mouseDragged() {
+    var rot = new p5.Vector(mouseX - width / 2, mouseY - height / 2, 0).vrrot(new p5.Vector(0, -1, 0));
+    dir = rot.ang * (-Math.sign(rot.axis.z));
+}
+
+function touchMoved() {}
+
 var touchScale = 1;
 
 var logData = { dir: dir, error: null };
 
-var rot = 0;
+var touchRot = 0;
 var date = new Date(2021, 4, 23, 4, 0);
 
 var zoomF = 5;
+var zoomPlanets = 0.5;
 
-var fov = 180;
-var dir = 0;
+var fov = 200;
+var dir = 60;
 
 function draw() {
     height = canvas.elt.clientHeight;
@@ -181,10 +192,10 @@ function draw() {
         cam = createCamera();
 
         cam.lookAt(0, 0, 0);
-        cam.setPosition(0, 250, 0);
-        cam.tilt(-90);
+        cam.setPosition(0, -250, 0);
+        cam.tilt(90);
     }
-    cam.ortho(-width / 2, width / 2, height / 2, -height / 2, 0, 500);
+    cam.ortho(-width / 2, width / 2, height / 2, -height / 2, 0, 5000);
 
     background(0);
     smooth();
@@ -194,6 +205,7 @@ function draw() {
     drawPlanets();
     pop();
 
+    rotateX(180);
     push();
     drawUi();
     pop();
@@ -213,8 +225,25 @@ function drawPlanets() {
 
     drawFov();
     pop();
+
     push();
     drawPlanetsFromEarth();
+    pop();
+}
+
+function renderPlanet(planet, day) {
+    push();
+
+    planet.position = planet.EclipticVector(day);
+
+    if (Astronomy.Sun != planet) {
+        var ligthDir = p5.Vector.sub(planet.position, Astronomy.Sun.position);
+        directionalLight(255, 255, 255, ligthDir.x, ligthDir.z, ligthDir.y);
+    }
+    translate(planet.position.x, planet.position.y, planet.position.z);
+    planet.render()
+    noLights();
+
     pop();
 }
 
@@ -226,67 +255,73 @@ function drawPlanetsFromEarth() {
     }
 }
 
-function renderPlanet(planet, day) {
-    push();
-
-    planet.position = planet.EclipticVector(day);
-
-    if (Astronomy.Sun != planet) {
-        var ligthDir = p5.Vector.sub(planet.position, Astronomy.Sun.position);
-        directionalLight(255, 255, 255, ligthDir.x, ligthDir.z, -ligthDir.y);
-    }
-    translate(planet.position.x, -planet.position.y, planet.position.z);
-    planet.render()
-    noLights();
-
-    pop();
-}
-
 function renderFromEarth(planet) {
     push();
 
-    var ligthDir = p5.Vector.sub(planet.position, Astronomy.Earth.position);
-    directionalLight(255, 255, 255, ligthDir.x, ligthDir.z, -ligthDir.y);
+    var dirP = p5.Vector.sub(planet.position, Astronomy.Earth.position);
+    var dirS = p5.Vector.sub(Astronomy.Sun.position, Astronomy.Earth.position);
 
-    translate(planet.position.x, -planet.position.y, planet.position.z);
-    //planet.render();
+    var rot = dirP.vrrot(vectorForaward);
+    var dirPV = dirP.rotateAround(rot.axis, rot.ang);
+    var dirSV = dirS.rotateAround(rot.axis, rot.ang);
+
+    var scaling = 40 / maxSize;
+    scale(scaling);
+
+    // print(dirP.mag());
+    translate(0, -(height / minSide) + maxSize + 0.02, -dirP.mag() / scaling * 100);
+    translate((((rot.ang) / (fov) * Math.sign(rot.axis.z)) - (dir / fov)) * 2, 0, 0);
+    // translate(-6.85 + maxSize * 10, -8.8 + maxSize * 10, dirP.mag());
+
+    var dirL = p5.Vector.sub(dirPV, dirSV);
+    directionalLight(255, 255, 255, dirL.x, dirL.y, dirL.z);
+    push();
+    scale(zoomPlanets);
+    planet.render();
+    pop();
     noLights();
 
     pop();
 }
 
+var vectorForaward = new p5.Vector(0, 1, 0);
+var vectorUp = new p5.Vector(0, 0, -1);
+
 function drawFov() {
     push();
-    translate(Astronomy.Earth.position.x, -Astronomy.Earth.position.y, Astronomy.Earth.position.z + 0.1);
+    translate(Astronomy.Earth.position.x, Astronomy.Earth.position.y, Astronomy.Earth.position.z - 0.1);
 
     strokeWeight(2);
 
     var fovDir = new p5.Vector(0, 1, 0).mult(maxDist);
 
-    var for2 = fov / 2;
-    fovDir = fovDir.rotateAround(new p5.Vector(0, 0, -1), for2 + dir);
+    var fov2 = fov / 2;
+    fovDir = fovDir.rotateAround(vectorUp, (dir - fov2));
 
     var stepCnt = 10;
-    var step = for2 / stepCnt;
+    var step = fov2 / stepCnt;
     var raystrength = 20;
     for (var i = 0; i <= stepCnt; i++) {
         var c = (1 - (i / stepCnt)) * 0.6 + 0.4;
         stroke(c * c * raystrength);
         line(0, 0, 0, fovDir.x, fovDir.y, fovDir.z);
-        fovDir = fovDir.rotateAround(new p5.Vector(0, 0, 1), step);
+        fovDir = fovDir.rotateAround(vectorUp, step);
     }
     for (var i = 0; i < stepCnt; i++) {
         var c = (i / stepCnt) * 0.6 + 0.4;
         stroke(c * c * raystrength);
         line(0, 0, 0, fovDir.x, fovDir.y, fovDir.z);
-        fovDir = fovDir.rotateAround(new p5.Vector(0, 0, 1), step);
+        fovDir = fovDir.rotateAround(vectorUp, step);
     }
 
     pop();
 }
 
 function drawUi() {
-    drawFrame();
+    if (isDebug) {
+        drawFrame();
+    }
+
     if (font) {
         push();
         textFont(font);
@@ -344,7 +379,7 @@ function zoom(x, y, delta) {
 function getZoom(x, y) {
     var partWidth = width / 6;
     if (y < partWidth / 2) {
-        switch (Math.floor(~~(x / partWidth))) {
+        switch (floor(~~(x / partWidth))) {
             case 0:
             case 1:
                 return zoomYear;
@@ -357,7 +392,8 @@ function getZoom(x, y) {
             case 5:
                 return zoomMinute;
         }
-    }
+    } else if (y > height - 120)
+        return zoomEarthView;
     return zoomFov;
 }
 
@@ -384,12 +420,16 @@ function zoomMonth(delta) { dMon = zoomInt(dMon, delta, d => date = date.addMont
 function zoomYear(delta) { dYe = zoomInt(dYe, delta, d => date = date.addYears(-d)); }
 
 function zoomPage(delta) {
-    zoomF = Math.min(Math.max(zoomF + delta, 1), 200);
+    zoomF = constrain(zoomF + delta, 1, 200);
     logData.zoom = zoomF;
 }
 
 function zoomFov(delta) {
-    fov = Math.min(Math.max(fov + delta * 3, 30), 359);
+    fov = constrain(fov + delta * 3, 30, 359);
+}
+
+function zoomEarthView(delta) {
+    zoomPlanets = constrain(zoomPlanets + delta * 0.01, 0.1, 1);
 }
 
 function zoomInt(val, delta, fn) {

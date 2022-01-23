@@ -20,11 +20,14 @@ p5.Vector.prototype.rotateAround = function(axis, angle) {
     );
 }
 
+var radToDeg = 180 / Math.PI;
+var degToRad = Math.PI / 180;
+
 p5.Vector.prototype.vrrot = function(b) {
     var an = p5.Vector.normalize(this);
     var bn = p5.Vector.normalize(b);
     var axb = p5.Vector.cross(an, bn).normalize();
-    var ac = Math.acos(p5.Vector.dot(an, bn));
+    var ac = acos(p5.Vector.dot(an, bn));
 
     var ac2 = ((an.cross(bn)).dot(axb)) / (an.dot(bn));
 
@@ -62,3 +65,7 @@ Date.prototype.addYears = function(years) {
 };
 
 Number.prototype.padStart = function(places) { return String(this).padStart(places, '0') };
+
+function log2(v) {
+    return Math.log2(v);
+}
