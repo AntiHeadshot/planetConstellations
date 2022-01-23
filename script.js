@@ -9,8 +9,7 @@ window.onerror = function myErrorHandler(errorMsg, url, lineNumber) {
 document.addEventListener('gesturestart', function(e) {
     e.preventDefault();
 });
-var isDebug = false;
-!!window.location.port;
+var isDebug = !!window.location.port;
 
 function getPoints(e) {
     var points = [];
@@ -196,9 +195,18 @@ function setup() {
     });
     mc.on("rotatemove", e => {
         var angDist = touchRot - e.rotation;
+        touchRot = e.rotation;
+
+        var partWidth = width / 6;
+        var y = e.pointers[0].pageY;
+        logData.y = y;
+        if (y < partWidth / 2) {
+            return;
+        } else if (y > height - 120)
+            return;
+
         angDist += (angDist > 180) ? -360 : (angDist < -180) ? 360 : 0
         dir -= angDist;
-        touchRot = e.rotation;
     });
 }
 
@@ -319,7 +327,13 @@ function renderFromEarth(planet) {
 
     // print(dirP.mag());
     translate(0, -(height / minSide) + maxSize2 * 2 * zoomPlanets + 0.02, -dirP.mag() * 10);
-    translate((((rot.ang) / (fov) * Math.sign(rot.axis.z)) - (dir / fov)) * 2, 0, 0);
+
+    var ang = rot.ang * Math.sign(rot.axis.z) - dir;
+    ang = (ang % (360) + 180) % 360 - 180;
+
+    var pt = ((ang) / fov) * 2;
+
+    translate(pt, 0, 0);
     // translate(-6.85 + maxSize * 10, -8.8 + maxSize * 10, dirP.mag());
 
     var dirL = p5.Vector.sub(dirPV, dirSV);
